@@ -7,7 +7,7 @@ use crate::{
 };
 use codec::Encode;
 use pallet_staking::{
-	slashing::SlashingSpans, EraIndex, Exposure, Nominations, StakingLedger, ValidatorPrefs,
+	slashing::SlashingSpans, EraIndex, Exposure, Nominations, StakingLedger,
 };
 use sp_npos_elections::*;
 use sp_runtime::traits::Convert;
@@ -18,6 +18,7 @@ const MODULE: &[u8] = b"Staking";
 // TODO: remove and use the new one once runtime 0.29 is there.
 #[derive(codec::Decode, Clone, Debug)]
 struct OldValidatorPrefs {
+	#[allow(dead_code)]
 	#[codec(compact)]
 	pub commission: sp_runtime::Perbill,
 }
@@ -45,7 +46,7 @@ async fn get_candidates(client: &Client, at: Hash) -> Vec<AccountId> {
 async fn stake_of(stash: &AccountId, client: &Client, at: Hash) -> Balance {
 	let ctrl = storage::read::<AccountId>(
 		storage::map_key::<frame_support::Twox64Concat>(MODULE, b"Bonded", stash.as_ref()),
-		&client,
+		client,
 		at,
 	)
 	.await
@@ -53,7 +54,7 @@ async fn stake_of(stash: &AccountId, client: &Client, at: Hash) -> Balance {
 
 	storage::read::<StakingLedger<AccountId, Balance>>(
 		storage::map_key::<frame_support::Blake2_128Concat>(MODULE, b"Ledger", ctrl.as_ref()),
-		&client,
+		client,
 		at,
 	)
 	.await
@@ -77,7 +78,7 @@ async fn get_voters(client: &Client, at: Hash) -> Vec<(AccountId, VoteWeight, Ve
 		let targets = n.targets;
 		let mut filtered_targets = vec![];
 		for target in targets.iter() {
-			let maybe_slashing_spans = slashing_span_of(&target, client, at).await;
+			let maybe_slashing_spans = slashing_span_of(target, client, at).await;
 			if maybe_slashing_spans.map_or(true, |spans| submitted_in >= spans.last_nonzero_slash())
 			{
 				filtered_targets.push(target.clone());
@@ -108,7 +109,7 @@ pub(crate) async fn slashing_span_of(
 ) -> Option<SlashingSpans> {
 	storage::read::<SlashingSpans>(
 		storage::map_key::<frame_support::Twox64Concat>(MODULE, b"SlashingSpans", stash.as_ref()),
-		&client,
+		client,
 		at,
 	)
 	.await
@@ -128,7 +129,7 @@ pub async fn exposure_of(
 			era.encode().as_ref(),
 			stash.as_ref(),
 		),
-		&client,
+		client,
 		at,
 	)
 	.await
@@ -152,7 +153,7 @@ fn to_currency(vote: Balance) -> Balance {
 /// Main run function of the sub-command.
 pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 	let at = opt.at.unwrap();
-	let val_count = get_validator_count(&client, at).await as usize;
+	let val_count = get_validator_count(client, at).await as usize;
 	let verbosity = opt.verbosity;
 	let iterations = conf.iterations;
 	let count = conf.count.unwrap_or(val_count);
@@ -171,7 +172,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 	let mut candidates = get_candidates(client, at).await;
 
 	// stash key of current voters, including maybe self vote.
-	let mut all_voters_and_stake = get_voters(&client, at).await;
+	let mut all_voters_and_stake = get_voters(client, at).await;
 
 	if let Some(path) = conf.manual_override {
 		#[derive(serde::Serialize, serde::Deserialize)]
@@ -204,7 +205,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 				all_voters_and_stake.iter_mut().find(|vv| vv.0 == v.0)
 			{
 				println!("manual override: {:?} is already a voter. Overriding votes.", v.0);
-				already_existing_voter.1 = v.1.into();
+				already_existing_voter.1 = v.1;
 				already_existing_voter.2 = v.2.clone();
 			} else {
 				println!("manual override: {:?} is added as voters.", v.0);
@@ -219,7 +220,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 	// add self-vote
 	for c in candidates.iter() {
 		let self_vote =
-			(c.clone(), to_vote_weight(stake_of(&c, &client, at).await), vec![c.clone()]);
+			(c.clone(), to_vote_weight(stake_of(c, client, at).await), vec![c.clone()]);
 		all_voters_and_stake.push(self_vote);
 	}
 
@@ -269,7 +270,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 	log::info!(target: LOG_TARGET, "💸 Winner Validators:");
 	let mut oversubscribed: u32 = 0;
 	for (i, (s, _)) in winners.iter().enumerate() {
-		let support = supports.get(&s).unwrap();
+		let support = supports.get(s).unwrap();
 		let other_count = support.voters.len();
 		let self_stake = support.voters.iter().filter(|(v, _)| v == s).collect::<Vec<_>>();
 		assert!(self_stake.len() <= 1);
@@ -280,7 +281,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 		println!(
 			"#{} --> {} [{:?}] [total backing = {:?} ({} voters)] [own backing = {:?}]",
 			i + 1,
-			storage::helpers::get_identity::<AccountId, Balance>(s.as_ref(), &client, at).await,
+			storage::helpers::get_identity::<AccountId, Balance>(s.as_ref(), client, at).await,
 			s.to_string(),
 			// Currency::from(support.total),
 			Currency::from(to_currency(support.total)),
@@ -305,7 +306,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 				);
 				nominator_info.entry(o.0.clone()).or_insert(vec![]).push((s.clone(), o.1));
 			});
-			println!("");
+			println!();
 		}
 	}
 
@@ -316,7 +317,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 		let mut counter = 1;
 		for (nominator, info) in nominator_info.iter() {
 			let mut sum = 0;
-			let nom_stake = slashable_balance_votes(&nominator);
+			let nom_stake = slashable_balance_votes(nominator);
 			println!(
 				"#{} {:?} // active_stake = {:?}",
 				counter,

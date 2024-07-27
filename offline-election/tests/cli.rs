@@ -1,6 +1,6 @@
 use assert_cmd::Command;
 
-const TEST_URI: &'static str = "ws://localhost:9944";
+const TEST_URI: &str = "ws://localhost:9944";
 
 async fn test_client() -> sub_storage::Client {
 	jsonrpsee_ws_client::WsClient::new(&TEST_URI, jsonrpsee_ws_client::WsConfig::default())

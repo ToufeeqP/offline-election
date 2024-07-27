@@ -13,7 +13,7 @@ pub async fn is_dangling(
 	client: &Client,
 	at: Hash,
 ) -> bool {
-	let maybe_slashing_spans = slashing_span_of(&target, client, at).await;
+	let maybe_slashing_spans = slashing_span_of(target, client, at).await;
 	!maybe_slashing_spans.map_or(true, |spans| {
 		println!("spans.last_nonzero_slash() = {:?}", spans.last_nonzero_slash());
 		submitted_in >= spans.last_nonzero_slash()
