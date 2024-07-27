@@ -342,7 +342,7 @@ async fn main() -> () {
 		"polkadot" => Ss58AddressFormat::PolkadotAccount,
 		"kusama" => Ss58AddressFormat::KusamaAccount,
 		"substrate" => Ss58AddressFormat::SubstrateAccount,
-		_ => panic!("Invalid network/address format."),
+		_ => Ss58AddressFormat::SubstrateAccount,
 	};
 
 	// setup address format and currency based on address format.
