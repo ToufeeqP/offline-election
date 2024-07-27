@@ -188,7 +188,7 @@ mod timing;
 pub mod subcommands;
 
 /// Default logging target.
-pub const LOG_TARGET: &'static str = "offline-election";
+pub const LOG_TARGET: &str = "offline-election";
 
 type Currency = sub_tokens::dynamic::DynamicToken;
 
@@ -303,6 +303,7 @@ pub struct CouncilConfig {
 	count: Option<usize>,
 
 	/// Json output file name. dumps the results into if given.
+	#[allow(dead_code)]
 	#[structopt(parse(from_os_str))]
 	output: Option<PathBuf>,
 
@@ -342,17 +343,17 @@ async fn main() -> () {
 		"polkadot" => Ss58AddressFormat::PolkadotAccount,
 		"kusama" => Ss58AddressFormat::KusamaAccount,
 		"substrate" => Ss58AddressFormat::SubstrateAccount,
-		_ => panic!("Invalid network/address format."),
+		_ => Ss58AddressFormat::SubstrateAccount,
 	};
 
 	// setup address format and currency based on address format.
 	set_default_ss58_version(address_format);
 	if address_format.eq(&Ss58AddressFormat::PolkadotAccount) {
-		sub_tokens::dynamic::set_name(&"DOT");
+		sub_tokens::dynamic::set_name("DOT");
 		sub_tokens::dynamic::set_decimal_points(10_000_000_000);
 	} else if address_format.eq(&Ss58AddressFormat::KusamaAccount) {
-		sub_tokens::dynamic::set_name(&"KSM");
-		sub_tokens::dynamic::set_decimal_points(1000_000_000_000);
+		sub_tokens::dynamic::set_name("KSM");
+		sub_tokens::dynamic::set_decimal_points(1_000_000_000_000);
 	}
 
 	// set total issuance

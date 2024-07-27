@@ -14,7 +14,7 @@ pub mod issuance {
 
 	/// Get the previously set total issuance.
 	pub fn get() -> Balance {
-		ISSUANCE.borrow().clone()
+		*ISSUANCE.borrow()
 	}
 
 	/// Set the total issuance. Any code wanting to use `CurrencyToVoteHandler` must call this first
@@ -47,7 +47,7 @@ impl Convert<u128, u128> for CurrencyToVoteHandler {
 /// Get total issuance of the chain.
 async fn get_total_issuance(client: &Client, at: Hash) -> Balance {
 	let maybe_total_issuance =
-		storage::read::<Balance>(storage::value_key(b"Balances", b"TotalIssuance"), &client, at)
+		storage::read::<Balance>(storage::value_key(b"Balances", b"TotalIssuance"), client, at)
 			.await;
 
 	maybe_total_issuance.unwrap_or(0)
@@ -60,7 +60,7 @@ pub async fn get_validators_and_expo_at(
 	use frame_support::Twox64Concat;
 	let validators = sub_storage::read::<Vec<crate::primitives::AccountId>>(
 		sub_storage::value_key(b"Session", b"Validators"),
-		&client,
+		client,
 		at,
 	)
 	.await

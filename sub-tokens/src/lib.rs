@@ -105,10 +105,10 @@ pub mod dynamic {
 
 	thread_local! {
 		/// Decimal points of the currency based on the network.
-		static DECIMAL_POINTS: RefCell<u128> = RefCell::new(1_000_000_000_000u128);
+		static DECIMAL_POINTS: RefCell<u128> = RefCell::new(1_000_000_000_000_000_000u128);
 
 		/// Name of the currency token based on the network.
-		static TOKEN_NAME: RefCell<&'static str> = RefCell::new("GTK");
+		static TOKEN_NAME: RefCell<&'static str> = RefCell::new("AVAIL");
 	}
 
 	pub fn set_name(name: &'static str) {
@@ -135,7 +135,7 @@ pub mod dynamic {
 			let name = TOKEN_NAME.with(|v| *v.borrow());
 			write!(
 				f,
-				"{},{:0>3} {} ({})",
+				"{}.{:0>3} {} ({})",
 				self.0 / decimal,
 				self.0 % decimal / (decimal / 1000),
 				name,

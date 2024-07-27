@@ -94,7 +94,7 @@ pub async fn run(client: &Client, opt: Opt, conf: CouncilConfig) {
 	let mut candidates = get_candidates(client, at).await;
 
 	// all voters.
-	let mut all_voters = get_voters_and_budget(&client, at)
+	let mut all_voters = get_voters_and_budget(client, at)
 		.await
 		.into_iter()
 		.map(|(n, b, t)| (n, to_votes(b), t))
@@ -191,7 +191,7 @@ pub async fn run(client: &Client, opt: Opt, conf: CouncilConfig) {
 		println!(
 			"#{} --> {} [{:?}][total backing = {:?}]",
 			i + 1,
-			storage::helpers::get_identity::<AccountId, Balance>(s.0.as_ref(), &client, at).await,
+			storage::helpers::get_identity::<AccountId, Balance>(s.0.as_ref(), client, at).await,
 			s.0,
 			Currency::from(supports.get(&s.0).unwrap().total),
 		);
@@ -208,7 +208,7 @@ pub async fn run(client: &Client, opt: Opt, conf: CouncilConfig) {
 					o.0
 				);
 			});
-			println!("");
+			println!();
 		}
 	}
 
@@ -230,7 +230,7 @@ pub async fn run(client: &Client, opt: Opt, conf: CouncilConfig) {
 		log::info!(
 			target: LOG_TARGET,
 			"👑 Prime: {}",
-			storage::helpers::get_identity::<AccountId, Balance>(prime.as_ref(), &client, at).await
+			storage::helpers::get_identity::<AccountId, Balance>(prime.as_ref(), client, at).await
 		);
 	}
 }

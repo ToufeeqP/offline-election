@@ -9,7 +9,7 @@ pub async fn run(client: &Client, opt: Opt, who: AccountId) {
 	let at = opt.at.unwrap();
 	let maybe_nomination = read::<pallet_staking::Nominations<AccountId>>(
 		map_key::<frame_support::Twox64Concat>(b"Staking", b"Nominators", who.as_ref()),
-		&client,
+		client,
 		at,
 	)
 	.await;
@@ -21,14 +21,14 @@ pub async fn run(client: &Client, opt: Opt, who: AccountId) {
 
 	let ctrl = read::<AccountId>(
 		map_key::<frame_support::Twox64Concat>(b"Staking", b"Bonded", who.as_ref()),
-		&client,
+		client,
 		at,
 	)
 	.await
 	.expect("Must have controller");
 	let total_bonded = read::<pallet_staking::StakingLedger<AccountId, Balance>>(
 		map_key::<frame_support::Blake2_128Concat>(b"Staking", b"Ledger", ctrl.as_ref()),
-		&client,
+		client,
 		at,
 	)
 	.await

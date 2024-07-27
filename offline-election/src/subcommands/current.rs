@@ -8,7 +8,7 @@ use sub_storage::helpers::*;
 /// Main run function of the sub-command.
 pub async fn run(client: &Client, config: Opt) {
 	let at = config.at.unwrap();
-	let (era, validators_and_expo) = crate::network::get_validators_and_expo_at(&client, at).await;
+	let (era, validators_and_expo) = crate::network::get_validators_and_expo_at(client, at).await;
 	log::info!(target: LOG_TARGET, "working on era {:?}", era);
 
 	let mut min_stake: Balance = Bounded::max_value();
