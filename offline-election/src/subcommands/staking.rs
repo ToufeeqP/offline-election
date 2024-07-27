@@ -7,7 +7,7 @@ use crate::{
 };
 use codec::Encode;
 use pallet_staking::{
-	slashing::SlashingSpans, EraIndex, Exposure, Nominations, StakingLedger,
+	slashing::SlashingSpans, EraIndex, Exposure, IndividualExposure, Nominations, StakingLedger,
 };
 use sp_npos_elections::*;
 use sp_runtime::traits::Convert;
@@ -21,6 +21,31 @@ struct OldValidatorPrefs {
 	#[allow(dead_code)]
 	#[codec(compact)]
 	pub commission: sp_runtime::Perbill,
+}
+
+#[derive(codec::Decode, Clone, Debug, Default)]
+/// Exposure metadata
+pub struct PagedExposureMetadata {
+	/// The total balance backing this validator.
+	#[codec(compact)]
+	pub total: Balance,
+	/// The validator's own stash that is exposed.
+	#[codec(compact)]
+	pub own: Balance,
+	/// Number of nominators backing this validator.
+	pub nominator_count: u32,
+	/// Number of pages of nominators.
+	pub page_count: u32,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, codec::Decode, Clone, Debug, Default)]
+/// Exposure page
+pub struct ExposurePage<AccountId> {
+	/// The total balance of this chunk/page.
+	#[codec(compact)]
+	pub page_total: Balance,
+	/// The portions of nominators stashes that are exposed.
+	pub others: Vec<IndividualExposure<AccountId, Balance>>,
 }
 
 fn assert_supports_total_equal(s1: &SupportMap<AccountId>, s2: &SupportMap<AccountId>) {
@@ -122,10 +147,10 @@ pub async fn exposure_of(
 	client: &Client,
 	at: Hash,
 ) -> Exposure<AccountId, Balance> {
-	storage::read::<Exposure<AccountId, Balance>>(
+	let overview: PagedExposureMetadata = storage::read(
 		storage::double_map_key::<frame_support::Twox64Concat, frame_support::Twox64Concat>(
 			MODULE,
-			b"ErasStakers",
+			b"ErasStakersOverview",
 			era.encode().as_ref(),
 			stash.as_ref(),
 		),
@@ -133,7 +158,43 @@ pub async fn exposure_of(
 		at,
 	)
 	.await
-	.unwrap_or_default()
+	.unwrap_or_default();
+	let mut others = Vec::with_capacity(overview.nominator_count as usize);
+	for page in 0..overview.page_count {
+		let mut nominators: ExposurePage<AccountId> = storage::read(
+			storage::triple_map_key::<
+				frame_support::Twox64Concat,
+				frame_support::Twox64Concat,
+				frame_support::Twox64Concat,
+			>(
+				MODULE,
+				b"ErasStakersPaged",
+				era.encode().as_ref(),
+				stash.as_ref(),
+				page.encode().as_ref(),
+			),
+			client,
+			at,
+		)
+		.await
+		.unwrap_or_default();
+		others.append(&mut nominators.others);
+	}
+
+	Exposure { total: overview.total, own: overview.own, others }
+
+	// storage::read::<Exposure<AccountId, Balance>>(
+	// 	storage::double_map_key::<frame_support::Twox64Concat, frame_support::Twox64Concat>(
+	// 		MODULE,
+	// 		b"ErasStakers",
+	// 		era.encode().as_ref(),
+	// 		stash.as_ref(),
+	// 	),
+	// 	client,
+	// 	at,
+	// )
+	// .await
+	// .unwrap_or_default()
 }
 
 async fn get_validator_count(client: &Client, at: Hash) -> u32 {
@@ -219,8 +280,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 
 	// add self-vote
 	for c in candidates.iter() {
-		let self_vote =
-			(c.clone(), to_vote_weight(stake_of(c, client, at).await), vec![c.clone()]);
+		let self_vote = (c.clone(), to_vote_weight(stake_of(c, client, at).await), vec![c.clone()]);
 		all_voters_and_stake.push(self_vote);
 	}
 

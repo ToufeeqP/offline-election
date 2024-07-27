@@ -81,6 +81,27 @@ pub fn double_map_key<H1: StorageHasher, H2: StorageHasher>(
 	StorageKey(final_key)
 }
 
+pub fn triple_map_key<H1: StorageHasher, H2: StorageHasher, H3: StorageHasher>(
+	module: &[u8],
+	storage: &[u8],
+	encoded_key_1: &[u8],
+	encoded_key_2: &[u8],
+	encoded_key_3: &[u8],
+) -> StorageKey {
+	let prefix = module_prefix_raw(module, storage);
+	let key1 = H1::hash(encoded_key_1);
+	let key2 = H2::hash(encoded_key_2);
+	let key3 = H3::hash(encoded_key_3);
+	let mut final_key = Vec::with_capacity(
+		prefix.len() + key1.as_ref().len() + key2.as_ref().len() + key3.as_ref().len(),
+	);
+	final_key.extend_from_slice(&prefix);
+	final_key.extend_from_slice(key1.as_ref());
+	final_key.extend_from_slice(key2.as_ref());
+	final_key.extend_from_slice(key3.as_ref());
+	StorageKey(final_key)
+}
+
 /// create key prefix for a map
 pub fn map_prefix_key(module: &[u8], storage: &[u8]) -> StorageKey {
 	StorageKey(module_prefix_raw(module, storage))
