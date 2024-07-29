@@ -6,9 +6,7 @@ use crate::{
 	storage, Client, Currency, Opt, StakingConfig, LOG_TARGET,
 };
 use codec::Encode;
-use pallet_staking::{
-	slashing::SlashingSpans, EraIndex, Exposure, Nominations, StakingLedger,
-};
+use pallet_staking::{slashing::SlashingSpans, EraIndex, Exposure, Nominations, StakingLedger};
 use sp_npos_elections::*;
 use sp_runtime::traits::Convert;
 use std::{collections::BTreeMap, convert::TryInto};
@@ -219,8 +217,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 
 	// add self-vote
 	for c in candidates.iter() {
-		let self_vote =
-			(c.clone(), to_vote_weight(stake_of(c, client, at).await), vec![c.clone()]);
+		let self_vote = (c.clone(), to_vote_weight(stake_of(c, client, at).await), vec![c.clone()]);
 		all_voters_and_stake.push(self_vote);
 	}
 

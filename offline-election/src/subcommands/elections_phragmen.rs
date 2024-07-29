@@ -216,8 +216,10 @@ pub async fn run(client: &Client, opt: Opt, conf: CouncilConfig) {
 	new_members.sort_by_key(|(m, _)| m.clone());
 	let mut prime_votes: Vec<_> = new_members.iter().map(|(c, _)| (c, Balance::zero())).collect();
 	for (_, stake, targets) in all_voters.into_iter() {
-		for (vote_multiplier, who) in
-			targets.iter().enumerate().map(|(vote_position, who)| ((16 - vote_position) as u32, who))
+		for (vote_multiplier, who) in targets
+			.iter()
+			.enumerate()
+			.map(|(vote_position, who)| ((16 - vote_position) as u32, who))
 		{
 			if let Ok(i) = prime_votes.binary_search_by_key(&who, |k| k.0) {
 				prime_votes[i].1 += (stake as Balance) * (vote_multiplier as Balance);
