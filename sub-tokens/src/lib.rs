@@ -168,7 +168,7 @@ pub mod dynamic {
 	
 			write!(
 				f,
-				"{}.{:03} {}{}",
+				"{}.{:03}{} {}",
 				integer_part,
 				fractional_part,
 				suffix,

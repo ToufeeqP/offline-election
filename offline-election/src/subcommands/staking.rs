@@ -265,7 +265,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 	let mut nominator_info: BTreeMap<AccountId, Vec<(AccountId, Balance)>> = BTreeMap::new();
 
 	log::info!(target: LOG_TARGET, "💸 Winner Validators:");
-	let mut oversubscribed: u32 = 0;
+	// let mut oversubscribed: u32 = 0;
 	for (i, (s, _)) in winners.iter().enumerate() {
 		let support = supports.get(s).unwrap();
 		let other_count = support.voters.len();
@@ -276,18 +276,19 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 		}
 
 		println!(
-			"#{} --> {} [{}] [total backing = {} ({} voters)]",
+			"#{} {} [{}] [total = {} ({} voters)]",
 			i + 1,
 			storage::helpers::get_identity::<AccountId, Balance>(s.as_ref(), client, at).await,
 			s.to_string(),
 			// Currency::from(support.total),
 			Currency::from(to_currency(support.total)),
-			if other_count > conf.max_payouts {
-				oversubscribed += 1;
-				ansi_term::Colour::Red.bold().paint(other_count.to_string())
-			} else {
-				ansi_term::Colour::Green.paint(other_count.to_string())
-			},
+			// if other_count > conf.max_payouts {
+			// 	oversubscribed += 1;
+			// 	ansi_term::Colour::Red.bold().paint(other_count.to_string())
+			// } else {
+			// 	ansi_term::Colour::Green.paint(other_count.to_string())
+			// },
+			other_count,
 			// self_stake.get(0).map(|s| to_currency(s.1)).map(Currency::from),
 		);
 
@@ -307,7 +308,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 		}
 	}
 
-	log::info!("++ oversubscribed = {}", oversubscribed);
+	// log::info!("++ oversubscribed = {}", oversubscribed);
 
 	if verbosity >= 2 {
 		log::info!("💰 Nominator Assignments:");
