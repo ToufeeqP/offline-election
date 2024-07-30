@@ -1,7 +1,7 @@
 //! Some helper functions for common substrate chains.
 
 use crate::{Hash, Client};
-use ansi_term::Colour;
+// use ansi_term::Colour;
 use codec::{Decode, Encode};
 use frame_support::{Blake2_128Concat, Twox64Concat};
 use frame_system::AccountInfo;
@@ -60,18 +60,18 @@ pub async fn get_identity<
 		let result = match display {
 			Data::Raw(bytes) => format!(
 				"{}",
-				Colour::Yellow.bold().paint(String::from_utf8(bytes).expect("Identity not utf-8"))
+				String::from_utf8(bytes).expect("Identity not utf-8")
 			),
-			_ => format!("{}", Colour::Red.bold().paint("???")),
+			_ => format!("{}", "???"),
 		};
 		if let Some(sub_identity) = maybe_subidentity {
 			match sub_identity.1 {
 				Data::Raw(bytes) => format!(
 					"{} ({})",
 					result,
-					Colour::Yellow.paint(String::from_utf8(bytes).expect("Identity not utf-8"))
+					String::from_utf8(bytes).expect("Identity not utf-8")
 				),
-				_ => format!("{}", Colour::Red.paint("???")),
+				_ => format!("{}", "???"),
 			}
 		} else {
 			result
