@@ -149,12 +149,30 @@ pub mod dynamic {
 			let num: u128 = self.0.try_into().unwrap();
 			let decimal = DECIMAL_POINTS.with(|v| *v.borrow());
 			let name = TOKEN_NAME.with(|v| *v.borrow());
+	
+			// Normalize the value by dividing by the decimal
+			let normalized_value = num as f64 / decimal as f64;
+	
+			// Determine the suffix based on the normalized value
+			let (value, suffix) = match normalized_value {
+				n if n >= 1_000_000_000_000.0 => (n / 1_000_000_000_000.0, "T"),
+				n if n >= 1_000_000_000.0 => (n / 1_000_000_000.0, "B"),
+				n if n >= 1_000_000.0 => (n / 1_000_000.0, "M"),
+				n if n >= 1_000.0 => (n / 1_000.0, "K"),
+				n => (n, ""),
+			};
+	
+			// Calculate the integer and fractional parts
+			let integer_part = value.trunc() as u64;
+			let fractional_part = ((value.fract() * 1000.0).round() as u64).min(999);
+	
 			write!(
 				f,
-				"{},{:0>3} {}",
-				(num / decimal).separated_string(),
-				num % decimal / (decimal / 1000),
-				name
+				"{}.{:03} {}{}",
+				integer_part,
+				fractional_part,
+				suffix,
+				if suffix.is_empty() { "" } else { name }
 			)
 		}
 	}

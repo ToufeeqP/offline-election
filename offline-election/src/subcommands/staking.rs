@@ -276,7 +276,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 		}
 
 		println!(
-			"#{} --> {} [{:?}] [total backing = {:?} ({} voters)] [own backing = {:?}]",
+			"#{} --> {} [{}] [total backing = {} ({} voters)]",
 			i + 1,
 			storage::helpers::get_identity::<AccountId, Balance>(s.as_ref(), client, at).await,
 			s.to_string(),
@@ -288,7 +288,7 @@ pub async fn run(client: &Client, opt: Opt, conf: StakingConfig) {
 			} else {
 				ansi_term::Colour::Green.paint(other_count.to_string())
 			},
-			self_stake.get(0).map(|s| to_currency(s.1)).map(Currency::from),
+			// self_stake.get(0).map(|s| to_currency(s.1)).map(Currency::from),
 		);
 
 		if verbosity >= 1 {
